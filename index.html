@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spin & Win</title>
+  <script type="module" src="firebase.js"></script>
+</head>
+<body style="text-align:center;font-family:sans-serif;padding:40px;">
+
+<h2>Enter Your Spin Code</h2>
+
+<input type="text" id="codeInput" placeholder="Enter Code">
+<br><br>
+<button onclick="checkCode()">Submit</button>
+
+<script type="module">
+import { db } from "./firebase.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+window.checkCode = async function() {
+  const code = document.getElementById("codeInput").value;
+
+  if(!code){
+    alert("Enter code");
+    return;
+  }
+
+  const docRef = doc(db, "codes", code);
+  const docSnap = await getDoc(docRef);
+
+  if(!docSnap.exists()){
+    alert("Invalid Code");
+    return;
+  }
+
+  if(docSnap.data().used){
+    alert("Code already used");
+    return;
+  }
+
+  sessionStorage.setItem("validCode", code);
+  window.location.href = "spin.html";
+}
+</script>
+
+</body>
+</html>
+
