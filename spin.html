@@ -1,95 +1,130 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Spin Wheel</title>
-  <script type="module" src="firebase.js"></script>
+  <title>Spin & Win</title>
   <style>
-    body{
-      text-align:center;
-      font-family:sans-serif;
-      padding:30px;
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      background: radial-gradient(circle at top, #1a1a1a, #000);
+      font-family: Arial, sans-serif;
+      color: white;
+      overflow: hidden;
     }
-    #wheel{
-      width:300px;
-      height:300px;
-      border-radius:50%;
-      border:10px solid #333;
-      margin:auto;
-      transition: transform 4s ease-out;
-      background: conic-gradient(
-        #ff4d4d 0% 40%,
-        #4dff4d 40% 70%,
-        #4d4dff 70% 85%,
-        #ffff4d 85% 95%,
-        #ff00ff 95% 100%
-      );
+
+    h1 {
+      margin-bottom: 20px;
+      text-shadow: 0 0 15px #ffcc00;
     }
-    button{
-      padding:10px 20px;
-      font-size:18px;
-      margin-top:20px;
+
+    .wheel-container {
+      position: relative;
+    }
+
+    canvas {
+      border-radius: 50%;
+      box-shadow: 0 0 40px #ff00ff, 0 0 60px #00ffff;
+      transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);
+    }
+
+    .pointer {
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-bottom: 40px solid #ffcc00;
+      position: absolute;
+      top: -35px;
+      left: 50%;
+      transform: translateX(-50%);
+      filter: drop-shadow(0 0 10px #ffcc00);
+    }
+
+    button {
+      margin-top: 30px;
+      padding: 12px 35px;
+      font-size: 18px;
+      font-weight: bold;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      background: linear-gradient(45deg, #ff00cc, #3333ff);
+      color: white;
+      box-shadow: 0 0 20px #ff00cc;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 30px #00ffff;
+    }
+
+    .result {
+      margin-top: 20px;
+      font-size: 22px;
+      font-weight: bold;
+      text-shadow: 0 0 15px #00ff00;
     }
   </style>
 </head>
 <body>
 
-<h2>Spin & Win</h2>
+<h1>🎰 Spin & Win 🎰</h1>
 
-<div id="wheel"></div>
+<div class="wheel-container">
+  <div class="pointer"></div>
+  <canvas id="wheel" width="400" height="400"></canvas>
+</div>
 
 <button onclick="spinWheel()">SPIN</button>
+<div class="result" id="result"></div>
 
-<h3 id="result"></h3>
+<script>
+  const canvas = document.getElementById("wheel");
+  const ctx = canvas.getContext("2d");
 
-<script type="module">
-import { db } from "./firebase.js";
-import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  const prizes = ["₹50", "₹100", "Try Again", "₹200", "₹500"];
+  const colors = ["#ff3c3c", "#33ff57", "#3399ff", "#ffcc00", "#cc33ff"];
+  const segments = prizes.length;
+  const angle = (2 * Math.PI) / segments;
 
-let spinning = false;
-
-function getReward() {
-  const rand = Math.random() * 100;
-
-  if(rand < 40) return "₹50";
-  if(rand < 70) return "₹100";
-  if(rand < 85) return "₹200";
-  if(rand < 95) return "₹500";
-  return "₹1000";
-}
-
-window.spinWheel = async function() {
-
-  if(spinning) return;
-  spinning = true;
-
-  const code = sessionStorage.getItem("validCode");
-
-  if(!code){
-    alert("Invalid Access");
-    window.location.href = "index.html";
-    return;
+  function drawWheel() {
+    for (let i = 0; i < segments; i++) {
+      ctx.beginPath();
+      ctx.moveTo(200, 200);
+      ctx.arc(200, 200, 200, i * angle, (i + 1) * angle);
+      ctx.fillStyle = colors[i];
+      ctx.fill();
+      ctx.save();
+      ctx.translate(200, 200);
+      ctx.rotate(i * angle + angle / 2);
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 18px Arial";
+      ctx.fillText(prizes[i], 80, 10);
+      ctx.restore();
+    }
   }
 
-  const reward = getReward();
+  drawWheel();
 
-  const wheel = document.getElementById("wheel");
-  const randomDegree = 3600 + Math.floor(Math.random()*360);
-  wheel.style.transform = "rotate(" + randomDegree + "deg)";
+  let currentRotation = 0;
 
-  setTimeout(async () => {
-    document.getElementById("result").innerText = "You won: " + reward;
+  function spinWheel() {
+    const randomIndex = Math.floor(Math.random() * segments);
+    const spinAngle = 360 * 5 + (360 - (randomIndex * (360 / segments)));
+    currentRotation += spinAngle;
 
-    await updateDoc(doc(db,"codes",code),{
-      used:true,
-      reward:reward
-    });
+    canvas.style.transform = `rotate(${currentRotation}deg)`;
 
-    sessionStorage.removeItem("validCode");
-
-    spinning = false;
-
-  },4000);
-}
+    setTimeout(() => {
+      document.getElementById("result").innerText =
+        "🎉 You Won: " + prizes[randomIndex];
+    }, 4000);
+  }
 </script>
 
 </body>
