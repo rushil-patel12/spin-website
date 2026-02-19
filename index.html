@@ -1,102 +1,62 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Enter Code</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body{
-margin:0;
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
-font-family:Arial, sans-serif;
-overflow:hidden;
-}
-
-.card{
-background:rgba(255,255,255,0.1);
-backdrop-filter:blur(20px);
-padding:40px;
-border-radius:20px;
-text-align:center;
-color:white;
-box-shadow:0 0 40px rgba(0,0,0,0.5);
-animation:fadeIn 1s ease;
-}
-
-input{
-width:250px;
-padding:15px;
-border:none;
-border-radius:10px;
-font-size:18px;
-text-align:center;
-outline:none;
-margin-top:20px;
-}
-
-button{
-margin-top:20px;
-padding:12px 30px;
-font-size:18px;
-border:none;
-border-radius:10px;
-cursor:pointer;
-background:linear-gradient(45deg,#ff416c,#ff4b2b);
-color:white;
-transition:0.3s;
-}
-
-button:hover{
-transform:scale(1.1);
-}
-
-@keyframes fadeIn{
-from{opacity:0; transform:translateY(-30px);}
-to{opacity:1; transform:translateY(0);}
-}
-
-.shake{
-animation:shake 0.4s;
-}
-
-@keyframes shake{
-0%{transform:translateX(0);}
-25%{transform:translateX(-10px);}
-50%{transform:translateX(10px);}
-75%{transform:translateX(-10px);}
-100%{transform:translateX(0);}
-}
-</style>
+  <title>Enter Code</title>
 </head>
+<body style="text-align:center;font-family:sans-serif;padding:40px;">
 
-<body>
+<h2>Enter Spin Code</h2>
 
-<div class="card" id="card">
-<h1>🔥 Spin & Win 🔥</h1>
-<p>Enter Access Code</p>
-<input type="password" id="codeInput" placeholder="Enter Code">
-<br>
-<button onclick="checkCode()">ENTER</button>
-</div>
+<input type="text" id="codeInput" placeholder="Enter Code">
+<br><br>
+<button id="checkBtn">Submit</button>
 
-<script>
-function checkCode(){
-let code = document.getElementById("codeInput").value;
-let card = document.getElementById("card");
+<p id="message"></p>
 
-if(code === "1234"){   // 🔥 Ahiya code change kari sakay
-window.location.href = "spin.html";
-}else{
-card.classList.add("shake");
-setTimeout(()=>{
-card.classList.remove("shake");
-},400);
-}
-}
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+document.getElementById("checkBtn").addEventListener("click", async () => {
+
+  const code = document.getElementById("codeInput").value.trim().toUpperCase();
+
+  const docRef = doc(db, "codes", code);
+  const docSnap = await getDoc(docRef);
+
+  if (!docSnap.exists()) {
+    document.getElementById("message").innerText = "❌ Invalid Code";
+    return;
+  }
+
+  if (docSnap.data().used === true) {
+    document.getElementById("message").innerText = "⚠ Code Already Used";
+    return;
+  }
+
+  // Mark code as used
+  await updateDoc(docRef, {
+    used: true
+  });
+
+  // Redirect to spin page
+  window.location.href = "spin.html";
+
+});
+
 </script>
 
 </body>
