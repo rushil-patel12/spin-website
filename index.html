@@ -1,62 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Enter Code</title>
+  <title>Spin & Win</title>
+  <script type="module" src="firebase.js"></script>
 </head>
 <body style="text-align:center;font-family:sans-serif;padding:40px;">
 
-<h2>Enter Spin Code</h2>
+<h2>Enter Your Spin Code</h2>
 
 <input type="text" id="codeInput" placeholder="Enter Code">
 <br><br>
-<button id="checkBtn">Submit</button>
-
-<p id="message"></p>
+<button onclick="checkCode()">Submit</button>
 
 <script type="module">
+import { db } from "./firebase.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+window.checkCode = async function() {
+  const code = document.getElementById("codeInput").value;
 
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-document.getElementById("checkBtn").addEventListener("click", async () => {
-
-  const code = document.getElementById("codeInput").value.trim().toUpperCase();
+  if(!code){
+    alert("Enter code");
+    return;
+  }
 
   const docRef = doc(db, "codes", code);
   const docSnap = await getDoc(docRef);
 
-  if (!docSnap.exists()) {
-    document.getElementById("message").innerText = "❌ Invalid Code";
+  if(!docSnap.exists()){
+    alert("Invalid Code");
     return;
   }
 
-  if (docSnap.data().used === true) {
-    document.getElementById("message").innerText = "⚠ Code Already Used";
+  if(docSnap.data().used){
+    alert("Code already used");
     return;
   }
 
-  // Mark code as used
-  await updateDoc(docRef, {
-    used: true
-  });
-
-  // Redirect to spin page
+  sessionStorage.setItem("validCode", code);
   window.location.href = "spin.html";
-
-});
-
+}
 </script>
 
 </body>
